@@ -44,9 +44,12 @@ java -jar <pkg> <markdown-filename>
 
 这里想不到放什么了，放个表格吧：
 
-| head one: left 1 | head two: left 2 | head three: right | head four: middle |
-| ------ | :------ | ------: | :-----: |
-|value 1| value 2| value 3 |value 4 |
+| head one: left 1      | head two: left 2 | head three: right | head four: middle |
+| ------ | :------ | ------: | :-----: | 
+|value 1| value 2| value 3 |value 4 | 123123 | asdcasd|
+|value 1 | value 2 |
+| value 1
+
 
 上面的表格里，包含了：
 
@@ -56,3 +59,4 @@ java -jar <pkg> <markdown-filename>
     * 靠右
     * 居中
     
+

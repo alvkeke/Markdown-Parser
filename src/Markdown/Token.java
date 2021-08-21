@@ -41,30 +41,32 @@ public class Token
         ERROR,
     }
 
-    private final static Map<TokenType, String> tokenMap = new HashMap(){{
-        put(TokenType.H1, "#");
-        put(TokenType.H2, "##");
-        put(TokenType.H3, "###");
-        put(TokenType.H4, "####");
-        put(TokenType.H5, "#####");
-        put(TokenType.H6, "######");
+    @SuppressWarnings("unchecked")
+    private final static Map<TokenType, String> tokenMap = new HashMap();
+    static {
+        tokenMap.put(TokenType.H1, "#");
+        tokenMap.put(TokenType.H2, "##");
+        tokenMap.put(TokenType.H3, "###");
+        tokenMap.put(TokenType.H4, "####");
+        tokenMap.put(TokenType.H5, "#####");
+        tokenMap.put(TokenType.H6, "######");
 
-        put(TokenType.STAR, "*");
+        tokenMap.put(TokenType.STAR, "*");
 
-        put(TokenType.BRACKET_1L, "(");
-        put(TokenType.BRACKET_1R, ")");
-        put(TokenType.BRACKET_2L, "[");
-        put(TokenType.BRACKET_2R, "]");
-        put(TokenType.BRACKET_3L, "{");
-        put(TokenType.BRACKET_3R, "}");
+        tokenMap.put(TokenType.BRACKET_1L, "(");
+        tokenMap.put(TokenType.BRACKET_1R, ")");
+        tokenMap.put(TokenType.BRACKET_2L, "[");
+        tokenMap.put(TokenType.BRACKET_2R, "]");
+        tokenMap.put(TokenType.BRACKET_3L, "{");
+        tokenMap.put(TokenType.BRACKET_3R, "}");
 
-        put(TokenType.CODE, "`");
-        put(TokenType.QUOTE, ">");
-        put(TokenType.TABLE_BREAK, "|");
-        put(TokenType.SPACE, " ");
-        put(TokenType.RETURN, "\n");
+        tokenMap.put(TokenType.CODE, "`");
+        tokenMap.put(TokenType.QUOTE, ">");
+        tokenMap.put(TokenType.TABLE_BREAK, "|");
+        tokenMap.put(TokenType.SPACE, " ");
+        tokenMap.put(TokenType.RETURN, "\n");
 
-    }};
+    }
 
 
     private final TokenType mType;
