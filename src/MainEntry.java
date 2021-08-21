@@ -17,6 +17,7 @@ public class MainEntry
 
         Parser parser = new Parser(tokens);
 
+        System.out.println(parser.result);
 
 //        File file = new File("tokens.txt");
 //        File file1 = new File("data.txt");

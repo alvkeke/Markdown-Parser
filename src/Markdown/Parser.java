@@ -9,15 +9,37 @@ public class Parser
     private final ArrayList<Token> tokens;
     private int index;
 
-    private String title()
+
+    private String title_pkg_html(int title_level, String line)
     {
-        return null;
+        if (title_level<=0 || title_level>6) return null;
+        return "<h" +
+                title_level +
+                ">" +
+                line +
+                "</h" +
+                title_level +
+                ">";
     }
 
-
-    private String quote()
+    private String title()
     {
-        return null;
+        if (index >= tokens.size()) return null;
+        Token t = tokens.get(index);
+
+        int level = t.getType().ordinal()+1;
+        if (level > 6) return null;
+        index++;
+        while (index < tokens.size())
+        {
+            t = tokens.get(index);
+            if (!t.getType().equals(Token.TokenType.SPACE)) break;
+            index++;
+        }
+
+        String title_data = line();
+
+        return title_pkg_html(level, title_data);
     }
 
     private String list()
@@ -38,6 +60,13 @@ public class Parser
             sb.append(t);
         }
 
+        return null;
+    }
+
+
+
+    private String quote()
+    {
         return null;
     }
 
@@ -139,6 +168,7 @@ public class Parser
     private String[] table_getHead()
     {
 
+        if (index >= tokens.size()) return null;
         if (!tokens.get(index++).getType().equals(Token.TokenType.TABLE_BREAK)) return null;
         ArrayList<String> array = new ArrayList<>();
 
