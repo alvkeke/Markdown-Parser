@@ -184,7 +184,44 @@ public class Parser
     private String table_pkg_html(String[] headers, int[] aligns, ArrayList<String[]> tableContents)
     {
         // TODO: finish this HTML format packaging method.
-        return null;
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<table>\n");
+
+        // table head
+        sb.append("<tr>\n");
+        for (String s : headers)
+        {
+            sb.append("<th>")
+                    .append(s)
+                    .append("</th>\n");
+        }
+        sb.append("</tr>\n");
+
+        // table content
+
+        for (String[] content : tableContents)
+        {
+            sb.append("<tr>\n");
+
+            for (int i=0; i<headers.length; i++)
+            {
+                if (i >= content.length) break;
+                sb.append("<td>")
+                        .append(content[i])
+                        .append("</td>\n");
+            }
+
+            sb.append("</tr>\n");
+        }
+
+
+        sb.append("</table>\n");
+
+        String result = sb.toString();
+
+        return sb.toString();
     }
 
     private String table()
@@ -241,13 +278,13 @@ public class Parser
         return null;
     }
 
-    private int codes_checkEnd(int iBegin)
+    private int codes_checkEnd(int ibegin)
     {
         int sym_count = 0;
 
-        while (iBegin < tokens.size())
+        while (ibegin < tokens.size())
         {
-            Token t = tokens.get(iBegin++);
+            Token t = tokens.get(ibegin++);
             if (t.getType().equals(Token.TokenType.CODE))
             {
                 sym_count ++;
