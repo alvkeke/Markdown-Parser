@@ -9,6 +9,272 @@ public class Parser
     private final ArrayList<Token> tokens;
     private int index;
 
+    private int star_get_count()
+    {
+        int i;
+        for (i=0; i<3; i++)
+        {
+            int nIndex = index + i;
+            if (nIndex >= tokens.size()) return i;
+            Token t = tokens.get(nIndex);
+            if (!t.getType().equals(Token.TokenType.STAR)) break;
+        }
+
+        return i;
+    }
+
+    private String text_pkg_code(String origin)
+    {
+        return "<code>"+origin+"</code>";
+    }
+
+    private String text_pkg_bold(String origin)
+    {
+        return "<p class=\"fw-bold\">" + origin + "</p>";
+    }
+
+    private String text_pkg_italic(String origin)
+    {
+        return "<p class=\"fst-italic\">" + origin + "</p>";
+    }
+
+    private String text_code()
+    {
+        Token t = tokens.get(index);
+        if (!t.getType().equals(Token.TokenType.CODE)) return null;
+        index++;
+
+        StringBuilder sb = new StringBuilder();
+        while (index < tokens.size())
+        {
+            t = tokens.get(index++);
+            if (t.getType().equals(Token.TokenType.CODE)) return sb.toString();
+            if (t.getType().equals(Token.TokenType.RETURN))
+            {
+                index--;
+                return null;
+            }
+            sb.append(t);
+        }
+
+        return null;
+    }
+
+    private String text_normal()
+    {
+        if (index >= tokens.size()) return null;
+
+        Token t = tokens.get(index);
+        if (t.getType().equals(Token.TokenType.RETURN)) return null;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(t);
+        index++;
+
+        while (index < tokens.size())
+        {
+            t = tokens.get(index);
+            Token.TokenType type = t.getType();
+            if (type.equals(Token.TokenType.RETURN) ||
+                    type.equals(Token.TokenType.CODE) ||
+                    type.equals(Token.TokenType.STAR))
+                return sb.toString();
+
+            sb.append(t);
+            index++;
+        }
+
+        return sb.toString();
+    }
+
+    private String text_italic()
+    {
+        if (index >= tokens.size()) return null;
+
+        Token t = tokens.get(index);
+        if (!t.getType().equals(Token.TokenType.STAR)) return null;
+        index++;
+
+        StringBuilder sb = new StringBuilder();
+
+        while (index < tokens.size())
+        {
+            t = tokens.get(index);
+
+            int star_count = star_get_count();
+            if (star_count == 1 || star_count > 2)
+            {
+                index++;
+                return sb.toString();
+            }
+
+            String s_ret = null;
+
+            int i_save = index;
+
+            if (star_count == 2)
+            {
+                s_ret = text_bold();
+                if (s_ret != null)
+                {
+                    sb.append(text_pkg_bold(s_ret));
+                    continue;
+                }
+                index = i_save;
+            }
+
+            if (t.getType() == Token.TokenType.CODE) s_ret = text_code();
+            if (s_ret != null)
+            {
+                sb.append(text_pkg_code(s_ret));
+                continue;
+            }
+
+            index = i_save;
+            s_ret = text_normal();
+            if (s_ret != null)
+            {
+                sb.append(s_ret);
+            }
+            else return null;
+
+        }
+
+        return null;
+    }
+
+    private String text_bold()
+    {
+        for (int i=0; i<2; i++)
+            if (index >= tokens.size()-i) return null;
+
+        index += 2;
+
+        StringBuilder sb = new StringBuilder();
+
+        while (index < tokens.size())
+        {
+
+            int star_count = star_get_count();
+            if (star_count >= 2)
+            {
+                index += 2;
+                return sb.toString();
+            }
+
+            Token t = tokens.get(index);
+
+            String s_ret = null;
+
+            int i_save = index;
+
+            if (star_count == 1)
+            {
+                if (t.getType() == Token.TokenType.STAR) s_ret = text_italic();
+                if (s_ret != null)
+                {
+                    sb.append(text_pkg_italic(s_ret));
+                    continue;
+                }
+                index = i_save;
+            }
+
+            if (t.getType() == Token.TokenType.CODE) s_ret = text_code();
+            if (s_ret != null)
+            {
+                sb.append(text_pkg_code(s_ret));
+                continue;
+            }
+
+            index = i_save;
+            s_ret = text_normal();
+            if (s_ret != null)
+            {
+                sb.append(s_ret);
+            }
+            else return null;
+
+        }
+
+        return null;
+    }
+
+    private String line()
+    {
+
+        boolean check_bold = true;
+        boolean check_italic = true;
+        boolean check_code = true;
+
+        StringBuilder sb = new StringBuilder();
+
+        while (index < tokens.size())
+        {
+            Token t = tokens.get(index);
+            if (t.getType().equals(Token.TokenType.RETURN))
+            {
+                index++;
+                return sb.toString();
+            }
+
+            int star_count = star_get_count();
+            String s_get;
+
+            int index_save = index;
+            if (check_bold &&star_count == 2)
+            {
+                s_get = text_bold();
+                if (s_get == null)
+                    check_bold = false;
+                else
+                {
+                    s_get = text_pkg_bold(s_get);
+                }
+            }
+            else if (check_italic && star_count >= 1)
+            {
+                s_get = text_italic();
+                if (s_get == null)
+                    check_italic = false;
+                else
+                {
+                    if (s_get.equals(""))
+                        s_get = "**";
+                    else
+                        s_get = text_pkg_italic(s_get);
+                }
+            }
+            else if (check_code && t.getType().equals(Token.TokenType.CODE))
+            {
+                s_get = text_code();
+                if (s_get == null)
+                    check_code = false;
+                else
+                {
+                    s_get = text_pkg_code(s_get);
+                }
+            }
+            else
+            {
+                s_get = text_normal();
+            }
+
+            if (s_get != null)
+            {
+                sb.append(s_get);
+                check_bold = true;
+                check_italic = true;
+                check_code = true;
+            }
+            else
+            {
+                index = index_save;
+            }
+        }
+
+        return null;
+    }
+
 
     private String title_pkg_html(int title_level, String line)
     {
@@ -46,23 +312,6 @@ public class Parser
     {
         return null;
     }
-
-    private String line()
-    {
-
-        StringBuilder sb = new StringBuilder();
-        while (index < tokens.size())
-        {
-            Token t = tokens.get(index++);
-            if (t.getType().equals(Token.TokenType.RETURN))
-                return sb.toString();
-
-            sb.append(t);
-        }
-
-        return null;
-    }
-
 
 
     private String quote()
@@ -279,7 +528,7 @@ public class Parser
         return table_pkg_html(headers, table_align, table_contents);
     }
 
-    private boolean codes_checkBegin()
+    private boolean code_block_checkBegin()
     {
         for (int i=0; i<3; i++)
         {
@@ -295,26 +544,26 @@ public class Parser
         return true;
     }
 
-    private String codes_getType()
+    private String code_block_getType()
     {
         StringBuilder sb = new StringBuilder();
         while (index < tokens.size())
         {
             Token t = tokens.get(index++);
             if (t.getType().equals(Token.TokenType.RETURN)) return sb.toString();
-            sb.append(t.toString());
+            sb.append(t);
         }
 
         return null;
     }
 
-    private int codes_checkEnd(int ibegin)
+    private int code_block_checkEnd(int i_begin)
     {
         int sym_count = 0;
 
-        while (ibegin < tokens.size())
+        while (i_begin < tokens.size())
         {
-            Token t = tokens.get(ibegin++);
+            Token t = tokens.get(i_begin++);
             if (t.getType().equals(Token.TokenType.CODE))
             {
                 sym_count ++;
@@ -335,7 +584,7 @@ public class Parser
         return 0;
     }
 
-    private String codes_getBody()
+    private String code_block_getBody()
     {
 
         StringBuilder sb = new StringBuilder();
@@ -346,7 +595,7 @@ public class Parser
 
             if (t.getType().equals(Token.TokenType.RETURN))
             {
-                int ret = codes_checkEnd(index);
+                int ret = code_block_checkEnd(index);
                 if (ret > 0)
                 {
                     index += ret;
@@ -354,22 +603,22 @@ public class Parser
                 }
             }
 
-            sb.append(t.toString());
+            sb.append(t);
         }
 
         return null;
     }
 
-    private String codes()
+    private String codd_block()
     {
 
-        if (!codes_checkBegin()) return null;
+        if (!code_block_checkBegin()) return null;
 
-        String codeType = codes_getType();
+        String codeType = code_block_getType();
 
         if (codeType == null) return null;
 
-        String codeBody = codes_getBody();
+        String codeBody = code_block_getBody();
 
         if (codeBody == null) return null;
 
@@ -380,7 +629,7 @@ public class Parser
     {
         int saveIndex = index;
 
-        String result = codes();
+        String result = codd_block();
         if (result != null)
             return result;
 
@@ -400,6 +649,7 @@ public class Parser
         result = title();
         if (result != null) return result;
 
+        index = saveIndex;
         return line();
     }
 
