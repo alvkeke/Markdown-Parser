@@ -73,7 +73,9 @@ public class Tokenizer
                     newTokenType = Token.TokenType.BRACKET_2R;
                 else if (ch == '}')
                     newTokenType = Token.TokenType.BRACKET_3R;
-                else if (newLine && ch == '>')
+//                else if (newLine && ch == '>')
+//                    newTokenType = Token.TokenType.QUOTE;
+                else if (ch == '>')
                     newTokenType = Token.TokenType.QUOTE;
                 else if (ch == '|')
                     newTokenType = Token.TokenType.TABLE_BREAK;

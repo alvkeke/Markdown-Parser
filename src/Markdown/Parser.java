@@ -344,7 +344,7 @@ public class Parser
 
     private String quote()
     {
-
+        if (index >= tokens.size()) return null;
         if (!tokens.get(index).getType().equals(Token.TokenType.QUOTE)) return null;
 
         ArrayList<Integer> levels = new ArrayList<>();
