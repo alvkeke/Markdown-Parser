@@ -1,5 +1,6 @@
 package Markdown;
 
+import javax.swing.text.html.HTMLDocument;
 import java.util.ArrayList;
 
 public class Parser
@@ -275,7 +276,6 @@ public class Parser
         return null;
     }
 
-
     private String title_pkg_html(int title_level, String line)
     {
         if (title_level<=0 || title_level>6) return null;
@@ -313,9 +313,54 @@ public class Parser
         return null;
     }
 
+    private String quote_pkg_data(ArrayList<Integer> levels, ArrayList<String> lines)
+    {
+
+
+
+        return "";
+    }
+
+    private int quote_move_level()
+    {
+        int i=0;
+        while (index < tokens.size())
+        {
+            Token t = tokens.get(index++);
+            switch (t.getType())
+            {
+                case QUOTE:
+                    i++;
+                case SPACE:
+                    break;
+                default:
+                    index--;
+                    return i;
+            }
+        }
+
+        return 0;
+    }
 
     private String quote()
     {
+
+        if (!tokens.get(index).getType().equals(Token.TokenType.QUOTE)) return null;
+
+        ArrayList<Integer> levels = new ArrayList<>();
+        ArrayList<String> lines = new ArrayList<>();
+
+        while (index < tokens.size())
+        {
+            int level = quote_move_level();
+            if (level == 0)
+                return quote_pkg_data(levels, lines);
+
+            levels.add(level);
+            lines.add(line());
+
+        }
+
         return null;
     }
 
