@@ -1,6 +1,5 @@
 package Markdown;
 
-import javax.swing.text.html.HTMLDocument;
 import java.util.ArrayList;
 
 public class Parser
@@ -10,33 +9,157 @@ public class Parser
     private final ArrayList<Token> tokens;
     private int index;
 
-    private int star_get_count()
+
+    private String html_pkg_text_code(String origin)
     {
-        int i;
-        for (i=0; i<3; i++)
+        return "<code>" +
+                origin.replace("<", "&lt;").replace(">", "&gt;")
+                + "</code>";
+    }
+
+    private String html_pkg_text_bold(String origin)
+    {
+        return "<strong>" + origin + "</strong>";
+    }
+
+    private String html_pkg_text_italic(String origin)
+    {
+        return "<em>" + origin + "</em>";
+    }
+
+    private String html_pkg_line(String line)
+    {
+        return "<p>"+line+"</p>";
+    }
+
+    private String html_pkg_title(int title_level, String line)
+    {
+        if (title_level<=0 || title_level>6) return null;
+        return "<h" +
+                title_level +
+                ">" +
+                line +
+                "</h" +
+                title_level +
+                ">";
+    }
+
+    private String html_pkg_table(String[] headers, int[] aligns, ArrayList<String[]> tableContents)
+    {
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<table class=\"table\">\n");
+
+        // table head
+        sb.append("<thead>\n<tr>\n");
+        for (String s : headers)
         {
-            int nIndex = index + i;
-            if (nIndex >= tokens.size()) return i;
-            Token t = tokens.get(nIndex);
-            if (!t.getType().equals(Token.TokenType.STAR)) break;
+            sb.append("<th>")
+                    .append(s)
+                    .append("</th>\n");
+        }
+        sb.append("</tr>\n</thead>\n");
+
+        // table content
+
+        sb.append("</tbody>\n");
+        for (String[] content : tableContents)
+        {
+            sb.append("<tr>\n");
+
+            for (int i=0; i<headers.length; i++)
+            {
+                if (i >= content.length) break;
+                sb.append("<td>")
+                        .append(content[i])
+                        .append("</td>\n");
+            }
+
+            sb.append("</tr>\n");
         }
 
-        return i;
+        sb.append("</tbody>\n");
+        sb.append("</table>\n");
+
+        return sb.toString();
     }
 
-    private String text_pkg_code(String origin)
+    private String html_pkg_quote(ArrayList<Integer> levels, ArrayList<String> lines)
     {
-        return "<code>"+origin+"</code>";
+
+        if (levels == null || lines == null) return null;
+        if (levels.size() != lines.size()) return null;
+
+        int last_level = 1;
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<div class=\"callout callout-default\">\n");
+
+        for (int i=0; i<levels.size(); i++)
+        {
+            int lv = levels.get(i);
+
+            if (lv > last_level)
+            {
+                int diff = lv - last_level;
+                for (int j=0; j<diff; j++)
+                {
+                    sb.append("<div class=\"callout callout-default\">\n");
+                }
+            }
+            else if (lv < last_level)
+            {
+                int diff = last_level - lv;
+                for (int j=0; j<diff; j++)
+                {
+                    sb.append("</div>\n");
+                }
+            }
+
+            sb.append("<p>").append(lines.get(i)).append("</p>\n");
+            last_level = lv;
+        }
+
+        if (last_level > 1)
+        {
+            int diff = last_level - 1;
+            for (int j=0; j<diff; j++)
+            {
+                sb.append("</div>\n");
+            }
+        }
+
+        sb.append("</div>\n");
+
+        return sb.toString();
     }
 
-    private String text_pkg_bold(String origin)
+    private String html_pkg_code(String type, String origin)
     {
-        return "<p class=\"fw-bold\">" + origin + "</p>";
+        return "<code type=\"" + type + "\">\n" +
+                origin.replace("<", "&lt;").replace(">", "&gt;")
+                + "\n</code>\n";
     }
 
-    private String text_pkg_italic(String origin)
+    private String html_pkg_doc(String body)
     {
-        return "<p class=\"fst-italic\">" + origin + "</p>";
+
+        return "<html>\n" +
+                "<head>\n" +
+                "    <meta charset=\"utf-8\"> \n" +
+                "    <title>Bootstrap 实例 - 响应式的列重置</title>\n" +
+                "    <link rel=\"stylesheet\" href=\"bootstrap-5.1.0-dist/css/bootstrap.min.css\">\n" +
+                "    <script src=\"bootstrap-5.1.0-dist/js/bootstrap.min.js\"></script>\n" +
+                "\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "<div class=\"container\">\n" +
+                body +
+                "</div>\n" +
+                "</body>\n" +
+                "</html>\n";
     }
 
     private String text_code()
@@ -88,6 +211,20 @@ public class Parser
         return sb.toString();
     }
 
+    private int star_get_count()
+    {
+        int i;
+        for (i=0; i<3; i++)
+        {
+            int nIndex = index + i;
+            if (nIndex >= tokens.size()) return i;
+            Token t = tokens.get(nIndex);
+            if (!t.getType().equals(Token.TokenType.STAR)) break;
+        }
+
+        return i;
+    }
+
     private String text_italic()
     {
         if (index >= tokens.size()) return null;
@@ -118,7 +255,7 @@ public class Parser
                 s_ret = text_bold();
                 if (s_ret != null)
                 {
-                    sb.append(text_pkg_bold(s_ret));
+                    sb.append(html_pkg_text_bold(s_ret));
                     continue;
                 }
                 index = i_save;
@@ -127,7 +264,7 @@ public class Parser
             if (t.getType() == Token.TokenType.CODE) s_ret = text_code();
             if (s_ret != null)
             {
-                sb.append(text_pkg_code(s_ret));
+                sb.append(html_pkg_text_code(s_ret));
                 continue;
             }
 
@@ -174,7 +311,7 @@ public class Parser
                 if (t.getType() == Token.TokenType.STAR) s_ret = text_italic();
                 if (s_ret != null)
                 {
-                    sb.append(text_pkg_italic(s_ret));
+                    sb.append(html_pkg_text_italic(s_ret));
                     continue;
                 }
                 index = i_save;
@@ -183,7 +320,7 @@ public class Parser
             if (t.getType() == Token.TokenType.CODE) s_ret = text_code();
             if (s_ret != null)
             {
-                sb.append(text_pkg_code(s_ret));
+                sb.append(html_pkg_text_code(s_ret));
                 continue;
             }
 
@@ -215,7 +352,10 @@ public class Parser
             if (t.getType().equals(Token.TokenType.RETURN))
             {
                 index++;
-                return sb.toString();
+                if (sb.toString().equals(""))
+                    return "";
+                else
+                    return html_pkg_line(sb.toString());
             }
 
             int star_count = star_get_count();
@@ -229,7 +369,7 @@ public class Parser
                     check_bold = false;
                 else
                 {
-                    s_get = text_pkg_bold(s_get);
+                    s_get = html_pkg_text_bold(s_get);
                 }
             }
             else if (check_italic && star_count >= 1)
@@ -242,7 +382,7 @@ public class Parser
                     if (s_get.equals(""))
                         s_get = "**";
                     else
-                        s_get = text_pkg_italic(s_get);
+                        s_get = html_pkg_text_italic(s_get);
                 }
             }
             else if (check_code && t.getType().equals(Token.TokenType.CODE))
@@ -252,7 +392,7 @@ public class Parser
                     check_code = false;
                 else
                 {
-                    s_get = text_pkg_code(s_get);
+                    s_get = html_pkg_text_code(s_get);
                 }
             }
             else
@@ -276,18 +416,6 @@ public class Parser
         return null;
     }
 
-    private String title_pkg_html(int title_level, String line)
-    {
-        if (title_level<=0 || title_level>6) return null;
-        return "<h" +
-                title_level +
-                ">" +
-                line +
-                "</h" +
-                title_level +
-                ">";
-    }
-
     private String title()
     {
         if (index >= tokens.size()) return null;
@@ -305,7 +433,7 @@ public class Parser
 
         String title_data = line();
 
-        return title_pkg_html(level, title_data);
+        return html_pkg_title(level, title_data);
     }
 
     private String list()
@@ -313,57 +441,7 @@ public class Parser
         return null;
     }
 
-    private String quote_pkg_data(ArrayList<Integer> levels, ArrayList<String> lines)
-    {
-
-        if (levels == null || lines == null) return null;
-        if (levels.size() != lines.size()) return null;
-
-        int last_level = 1;
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("<div class=\"callout callout-default\">\n");
-
-        for (int i=0; i<levels.size(); i++)
-        {
-            int lv = levels.get(i);
-
-            if (lv > last_level)
-            {
-                int diff = lv - last_level;
-                for (int j=0; j<diff; j++)
-                {
-                    sb.append("<div class=\"callout callout-default\">\n");
-                }
-            }
-            else if (lv < last_level)
-            {
-                int diff = last_level - lv;
-                for (int j=0; j<diff; j++)
-                {
-                    sb.append("</div>\n");
-                }
-            }
-
-            sb.append("<p>").append(lines.get(i)).append("</p>\n");
-            last_level = lv;
-        }
-
-        if (last_level > 1)
-        {
-            int diff = last_level - 1;
-            for (int j=0; j<diff; j++)
-            {
-                sb.append("</div>\n");
-            }
-        }
-
-        sb.append("</div>\n");
-
-        return sb.toString();
-    }
-
-    private int quote_move_level()
+    private int quote_skip_level()
     {
         int i=0;
         while (index < tokens.size())
@@ -394,9 +472,9 @@ public class Parser
 
         while (index < tokens.size())
         {
-            int level = quote_move_level();
+            int level = quote_skip_level();
             if (level == 0)
-                return quote_pkg_data(levels, lines);
+                return html_pkg_quote(levels, lines);
 
             levels.add(level);
             lines.add(line());
@@ -547,49 +625,6 @@ public class Parser
         return null;
     }
 
-    private String table_pkg_html(String[] headers, int[] aligns, ArrayList<String[]> tableContents)
-    {
-        // TODO: finish this HTML format packaging method.
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("<table>\n");
-
-        // table head
-        sb.append("<tr>\n");
-        for (String s : headers)
-        {
-            sb.append("<th>")
-                    .append(s)
-                    .append("</th>\n");
-        }
-        sb.append("</tr>\n");
-
-        // table content
-
-        for (String[] content : tableContents)
-        {
-            sb.append("<tr>\n");
-
-            for (int i=0; i<headers.length; i++)
-            {
-                if (i >= content.length) break;
-                sb.append("<td>")
-                        .append(content[i])
-                        .append("</td>\n");
-            }
-
-            sb.append("</tr>\n");
-        }
-
-
-        sb.append("</table>\n");
-
-        String result = sb.toString();
-
-        return sb.toString();
-    }
-
     private String table()
     {
 
@@ -612,7 +647,7 @@ public class Parser
         }
 
 
-        return table_pkg_html(headers, table_align, table_contents);
+        return html_pkg_table(headers, table_align, table_contents);
     }
 
     private boolean code_block_checkBegin()
@@ -696,7 +731,7 @@ public class Parser
         return null;
     }
 
-    private String codd_block()
+    private String code_block()
     {
 
         if (!code_block_checkBegin()) return null;
@@ -709,14 +744,14 @@ public class Parser
 
         if (codeBody == null) return null;
 
-        return "<code type=\"" + codeType + "\">\n" + codeBody + "\n</code>\n";
+        return html_pkg_code(codeType, codeBody);
     }
 
     private String block()
     {
         int saveIndex = index;
 
-        String result = codd_block();
+        String result = code_block();
         if (result != null)
             return result;
 
@@ -752,7 +787,7 @@ public class Parser
             sb.append("\n");
         }
 
-        result =  sb.toString();
+        result =  html_pkg_doc(sb.toString());
     }
 
     public Parser(ArrayList<Token> tokens)
