@@ -316,9 +316,51 @@ public class Parser
     private String quote_pkg_data(ArrayList<Integer> levels, ArrayList<String> lines)
     {
 
+        if (levels == null || lines == null) return null;
+        if (levels.size() != lines.size()) return null;
 
+        int last_level = 1;
 
-        return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div class=\"callout callout-default\">\n");
+
+        for (int i=0; i<levels.size(); i++)
+        {
+            int lv = levels.get(i);
+
+            if (lv > last_level)
+            {
+                int diff = lv - last_level;
+                for (int j=0; j<diff; j++)
+                {
+                    sb.append("<div class=\"callout callout-default\">\n");
+                }
+            }
+            else if (lv < last_level)
+            {
+                int diff = last_level - lv;
+                for (int j=0; j<diff; j++)
+                {
+                    sb.append("</div>\n");
+                }
+            }
+
+            sb.append("<p>").append(lines.get(i)).append("</p>\n");
+            last_level = lv;
+        }
+
+        if (last_level > 1)
+        {
+            int diff = last_level - 1;
+            for (int j=0; j<diff; j++)
+            {
+                sb.append("</div>\n");
+            }
+        }
+
+        sb.append("</div>\n");
+
+        return sb.toString();
     }
 
     private int quote_move_level()
