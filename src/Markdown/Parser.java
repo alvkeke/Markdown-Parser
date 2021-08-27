@@ -27,6 +27,14 @@ public class Parser
         return "<em>" + origin + "</em>";
     }
 
+    private String html_pkg_text_normal(String origin)
+    {
+        return origin
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
     private String html_pkg_line(String line)
     {
         return "<p>"+line+"</p>";
@@ -208,7 +216,7 @@ public class Parser
             index++;
         }
 
-        return sb.toString();
+        return html_pkg_text_normal(sb.toString());
     }
 
     private int star_get_count()
