@@ -144,6 +144,19 @@ public class Parser
         return sb.toString();
     }
 
+    private String html_pkg_list(ArrayList<Integer> levels, ArrayList<String> lines)
+    {
+        if (levels == null || lines == null) return null;
+        if (levels.size() != lines.size()) return null;
+
+        StringBuilder sb = new StringBuilder();
+
+        ArrayList<Integer> indexs = new ArrayList<>();
+        indexs.add(levels.get(0));
+
+        return sb.toString();
+    }
+
     private String html_pkg_code(String type, String origin)
     {
         return "<code type=\"" + type + "\">\n" +
@@ -444,8 +457,95 @@ public class Parser
         return html_pkg_title(level, title_data);
     }
 
+
+    private int list_check_level()
+    {
+        int n_space = 0;
+
+        while (index + n_space < tokens.size())
+        {
+            Token t = tokens.get(index + n_space);
+            if (!t.getType().equals(Token.TokenType.SPACE)) break;
+            n_space++;
+        }
+
+        Token t = tokens.get(index + n_space);
+        String str = t.toString();
+        char cc = str.charAt(str.length()-1);
+        if (cc != '.') return -1;
+        String ss = str.substring(0, str.length()-1);
+
+        try
+        {
+            Integer.parseInt(ss);
+            index += n_space;
+            index++;
+            return (n_space/3)+1;
+        }
+        catch (Exception ignored)
+        {
+            return -1;
+        }
+
+    }
+
+    private int list_get_first_index()
+    {
+        int n_space = 0;
+
+        while (index + n_space < tokens.size())
+        {
+            if (n_space > 3) return -1;
+            Token t = tokens.get(index + n_space);
+            if (!t.getType().equals(Token.TokenType.SPACE)) break;
+            n_space++;
+        }
+
+        Token t = tokens.get(index + n_space);
+        String str = t.toString();
+        char cc = str.charAt(str.length()-1);
+        if (cc != '.') return -1;
+        String ss = str.substring(0, str.length()-1);
+
+        try
+        {
+            index += n_space;
+            index++;
+            return  Integer.parseInt(ss);
+        }
+        catch (Exception ignored)
+        {
+            return -1;
+        }
+
+    }
+
     private String list()
     {
+
+        int first_index = list_get_first_index();
+        if (first_index < 0) return null;
+
+        int level_last = 1;
+
+        ArrayList<Integer> levels = new ArrayList<>();
+        ArrayList<String> lines = new ArrayList<>();
+        levels.add(level_last);
+        String s = line();
+        if (s == null) return null;
+        lines.add(s);
+
+        while (index < tokens.size())
+        {
+            int  level = list_check_level();
+//            if (level < 0) return
+            if (level - level_last > 1) return null;
+            s = line();
+            lines.add(s);
+        }
+
+
+
         return null;
     }
 
